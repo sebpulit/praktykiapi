@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <style>
+            * {
+                font-family: Arial;
+            }
+
+            body {
+                background-color: blanchedalmond;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* h1 {
+                font-family: Arial;
+
+            } */
+
+            .tags {
+                color: rgb(0, 102, 255);
+            }
+
+            div.container {
+                display: flex;
+            }
+
+
+            div.container .searchDiv input {
+                width: 80%;
+                outline: none;
+                height: 40px;
+                border-radius: 50px;
+                border: 2px solid rgb(119, 54, 0);
+                background-color: rgb(229, 197, 147);
+            }
+
+            div.container .searchDiv {
+                /* background-color: red; */
+                padding-top: 10px;
+                order: 1;
+                width: 20%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                height: 100%;
+            }
+
+            .list {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin: 10px;
+            }
+
+            .list button {
+                width: 80%;
+                margin: 10px;
+                height: 40px;
+                outline: none;
+                border: 2px solid rgb(119, 54, 0);
+                background-color: rgb(229, 197, 147);
+                border-radius: 40px;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: bold;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .list button:hover {
+                border: 2px solid rgb(229, 197, 147);
+                background-color: rgb(119, 54, 0);
+            }
+
+            div.mealContainer {
+                display: flex;
+                /* justify-content: center; */
+                align-items: center;
+                flex-direction: column;
+                width: 80%;
+            }
+
+            img {
+                border-radius: 12px;
+                width: 30%;
+                height: auto;
+            }
+
+            .cuisine {
+                font-style: italic;
+            }
+            
+            p {
+                margin-left: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="searchDiv">
+                <input type="text" placeholder="Search...">
+                <div class="list"></div>
+            </div>
+            <div class="mealContainer">
+                <h1>Witaj na stronie dań!</h1>
+                <h2></h2>
+                <img src="" alt="">
+                <div class="ingredients">
+                    <ul>
+                    </ul>
+                </div>
+                <div class="tags"></div>
+                <p></p>
+            </div>
+        </div>
+
+
+        <script>
+            const input = document.querySelector('input')
+            let searchBox = document.querySelector('.list');
+            input.addEventListener('input', (e) => {
+                if (e.target.value == '') {
+                    searchBox.innerHTML = ''
+                } else if ( e.target.value.length < 2) {
+                    searchBox.innerHTML = ''
+                    // fetch('https://www.themealdb.com/api/json/v1/1/random.php')
+                    fetch('https://www.themealdb.com/api/json/v1/1/search.php?f='+e.target.value)
+                    .then(request => request.json())
+                    // .then(data => console.log(data))
+                    .then(data => setSearch(data))
+                } else {
+                    searchBox.innerHTML = ''
+                    fetch('https://www.themealdb.com/api/json/v1/1/search.php?s='+e.target.value)
+                    .then(request => request.json())
+                    // .then(data => console.log(data))
+                    .then(data => setSearch(data))
+                }
+
+            })
+
+            function setSearch(data) {
+                for(let i = 0; i < data.meals.length; i++) {
+                    // console.log(data.meals[i]["idMeal"])
+                    searchBox.innerHTML += `<button onclick=getData(${data.meals[i]["idMeal"]})>${data.meals[i]["strMeal"]}</button>`
+                }
+            }
+
+            function getData(danie) {
+                // console.log("DANIE" + danie);
+                fetch('https://www.themealdb.com/api/json/v1/1/lookup.php?i='+danie)
+                .then(request => request.json())
+                // .then(data => console.log(data))
+                .then(data => putData(data))
+            }
+
+            function putData(data) {
+                console.log(data)
+                const danie = data["meals"][0]
+
+                const nazwaDania = danie["strMeal"]
+
+                const cuisine = danie["strArea"]
+                
+                const ingredients = [];               
+                const countOfIngredients = [];
+                for(let i = 1; i < 20; i++) {
+                    if (danie["strIngredient"+i] !== '' && danie["strIngredient"+i] !== null && danie["strIngredient"+i] !== undefined) {
+                        ingredients.push(danie["strIngredient"+i]);
+                        countOfIngredients.push(danie["strMeasure"+i]);
+                    }
+                }
+                
+                const zdjecie = danie["strMealThumb"]
+
+                const tags = danie["strTags"];
+
+                const instructions = danie["strInstructions"];
+
+                setData(nazwaDania, ingredients, zdjecie, tags, instructions, cuisine, countOfIngredients);
+            }
+
+            function setData(name, ingredients, zdjecie, tags, instructions, cuisine, ilosc) {
+                const titleBox = document.querySelector('h1')
+                const area = document.querySelector('h2')
+                const ingredientsBox = document.querySelector('div.ingredients ul')
+                const picture = document.querySelector('img')
+                const tagsBox = document.querySelector('div.tags')
+                const p = document.querySelector('p')
+
+                titleBox.innerHTML = name
+                area.innerHTML = "Cuisine: " + '<span class="cuisine">' + cuisine + '</span>';
+                ingredientsBox.innerHTML = '<strong>Ingredients: </strong>';
+                for(let i = 0; i < ingredients.length; i++) {
+                    ingredientsBox.innerHTML += '<li>' + ingredients[i] + ' - ' + ilosc[i] + '</li> '
+                }
+                picture.setAttribute('src', zdjecie);
+                if (tags !== '' && tags !== null && tags !== undefined) {
+                    for(let i = 0; i < tags.length; i++) {
+                        tagsBox.innerHTML = '#' + tags.replaceAll(",", "<br>#");
+                    }
+                }
+                p.innerHTML = instructions;
+            }
+        </script>
+    </body>
+</html>
